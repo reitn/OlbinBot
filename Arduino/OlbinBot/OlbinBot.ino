@@ -90,20 +90,13 @@ void loop() {
         else if(data.equals("SH")) {
           change_speed(300);
         }
-        
         break;
 
       case 'L':
         break;
       case 'U': // Ultrasonic sensor control
-        int distance = getDistance();
-        String startMark = "@";
-        String endMark = "#";
-        String value = startMark + distance + endMark;
-        //Serial.print("@");
+        distance = getDistance();
         Serial.println(distance);
-        //Serial.flush();
-        //Serial.println("#");
         break;
     }
   }
