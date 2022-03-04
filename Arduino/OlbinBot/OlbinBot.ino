@@ -1,11 +1,21 @@
 #include "SoftwareSerial.h"
 #include "olbin.h"
 
-SoftwareSerial mySerial(2,3);
+SoftwareSerial mySerial(4,5);
 int ultraSonic_trig = 7;
 int ultraSonic_echo = 6;
+int button = 2;
 int distance =0;
 bool isUltraSonicCheck = false;
+bool button_clicked = false;
+
+int32_t robot_speed;
+int speed_factor;
+Olbin olbin;
+InfoToMakeDXLPacket_t _CM50_command;
+
+int32_t LED_ON = 1;
+int32_t LED_OFF = 0;
 /* Control protocol
 @[Target][Length][Data]#
 - Target:
@@ -32,30 +42,32 @@ bool isUltraSonicCheck = false;
       Return @[distance in cm]#
 */
 
-// CM-50 Commands (Control bytes)
-int32_t robot_speed;
-Olbin olbin;
-InfoToMakeDXLPacket_t _CM50_command;
-
-
 void setup() {
   mySerial.begin(57600);
   pinMode(ultraSonic_trig, OUTPUT);
   pinMode(ultraSonic_echo, INPUT);
+  pinMode(button, INPUT);
+  attachInterrupt(digitalPinToInterrupt(button), catchInterrupt, RISING);
   Serial.begin(115200);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for Native USB only
   }
 
-  // Generate CM-50 Commands
   olbin = Olbin();
-  change_speed(256);
+  speed_factor = 50;
+  change_speed(250);
+  
+  
   Serial.println("Start");
 
 }
 
 void loop() {
-
+  if(button_clicked)
+  {
+    change_speed_by_button();
+    button_clicked = false;
+  }
   // CM-50 Control code
   String recv_data=Serial.readStringUntil('#');
   if(recv_data.charAt(0) == '@')
@@ -85,7 +97,7 @@ void loop() {
           change_speed(200);
         }
         else if(data.equals("SM")) {
-          change_speed(256);
+          change_speed(250);
         }
         else if(data.equals("SH")) {
           change_speed(300);
@@ -93,6 +105,22 @@ void loop() {
         break;
 
       case 'L':
+        if(data.equals("BN"))
+        {
+          turnBlueLEDOn();
+        }
+        else if(data.equals("BF"))
+        {
+          turnBlueLEDOff();
+        }
+        else if(data.equals("RN"))
+        {
+          turnRedLEDOn();
+        }
+        else if(data.equals("RF"))
+        {
+          turnRedLEDOff();
+        }
         break;
       case 'U': // Ultrasonic sensor control
         distance = getDistance();
@@ -101,6 +129,11 @@ void loop() {
     }
   }
 
+}
+
+void catchInterrupt()
+{
+  button_clicked = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -134,6 +167,30 @@ int getDistance()
 // CM-50 Control
 //
 ///////////////////////////////////////////////////////////////////////////
+
+void change_speed_by_button()
+{
+  
+  speed_factor = (speed_factor+50)%150; // Rotate 0 - 50 - 100
+  change_speed(200 + speed_factor); // Speed rotate 200 - 250 - 300
+  switch(robot_speed)
+  {
+    case 200:
+      turnRedLEDOn();
+      turnBlueLEDOff();
+      break;
+    case 250:
+      turnRedLEDOff();
+      turnBlueLEDOff();
+      break;
+    case 300:
+      turnRedLEDOff();
+      turnBlueLEDOn();
+      break;
+  }
+  stopMoving();
+
+}
 
 
 void change_speed(int32_t speed_to_change)
@@ -189,7 +246,34 @@ void stopMoving()
   write_command(_CM50_command);
   _CM50_command = olbin.command_set_motor_speed(2, MOTOR_DIRECTION::CW, 0);
   write_command(_CM50_command);
-
+  delay(1000);
 }
 
 /// End of CM-50 Motor
+
+// CM-50 LED
+void turnBlueLEDOn()
+{
+  _CM50_command = olbin.get_command(200, 80, (uint8_t*)&LED_ON, 1);
+  write_command(_CM50_command);
+}
+
+void turnBlueLEDOff()
+{
+  _CM50_command = olbin.get_command(200, 80, (uint8_t*)&LED_OFF, 1);
+  write_command(_CM50_command);
+}
+
+void turnRedLEDOn()
+{
+  _CM50_command = olbin.get_command(200, 79, (uint8_t*)&LED_ON, 1);
+  write_command(_CM50_command);
+}
+
+void turnRedLEDOff()
+{
+  _CM50_command = olbin.get_command(200, 79, (uint8_t*)&LED_OFF, 1);
+  write_command(_CM50_command);
+}
+
+// End of CM-50 LED
