@@ -1,14 +1,19 @@
+#include "Servo.h"
+#include "LedControl.h"
 #include "SoftwareSerial.h"
 #include "olbin.h"
 
 SoftwareSerial mySerial(4,5);
+Servo microServo;
+LedControl dot = LedControl(11,13,12,1);
+ 
 int ultraSonic_trig = 7;
 int ultraSonic_echo = 6;
 int button = 2;
+int servo = 10;
 int distance =0;
 bool isUltraSonicCheck = false;
 bool button_clicked = false;
-
 int32_t robot_speed;
 int speed_factor;
 Olbin olbin;
@@ -17,11 +22,12 @@ InfoToMakeDXLPacket_t _CM50_command;
 int32_t LED_ON = 1;
 int32_t LED_OFF = 0;
 /* Control protocol
-@[Target][Length][Data]#
+@[Target(1)][Length(2)][Data]#
 - Target:
   M : Motor
   L : Led
   U : Ultra Sonic
+  S : Servo
 - Data:
     Motor :
       MF : Move forward
@@ -39,7 +45,10 @@ int32_t LED_OFF = 0;
       RF : Red LED Off
     Ultra Sonic :
       Data None.
-      Return @[distance in cm]#
+      Return [distance in cm]
+    Servo :
+      Angle (Example @S290# : Set servo angle to 90 dgree)
+      
 */
 
 void setup() {
@@ -47,6 +56,11 @@ void setup() {
   pinMode(ultraSonic_trig, OUTPUT);
   pinMode(ultraSonic_echo, INPUT);
   pinMode(button, INPUT);
+  microServo.attach(servo);
+  dot.shutdown(0, false);
+  dot.setIntensity(0,8);
+  dot.clearDisplay(0);
+  
   attachInterrupt(digitalPinToInterrupt(button), catchInterrupt, RISING);
   Serial.begin(115200);
   while (!Serial) {
@@ -62,7 +76,17 @@ void setup() {
 
 }
 
-void loop() {
+void loop(){
+  loop_uploadMode();
+  //loop_testMode();
+ 
+}
+
+void loop_testMode() {
+  // Unblock loop_testMode in loop() and put test code here.
+}
+
+void loop_uploadMode() {
   if(button_clicked)
   {
     change_speed_by_button();
@@ -73,8 +97,9 @@ void loop() {
   if(recv_data.charAt(0) == '@')
   {
     char target = recv_data.charAt(1);
-    int data_len = recv_data.charAt(2) - '0';
-    String data = recv_data.substring(3, 3 + data_len);
+    int data_len = recv_data.substring(2,4).toInt();
+    //int data_len = recv_data.charAt(2) - '0';
+    String data = recv_data.substring(4, 4 + data_len);
 
     switch(target){
       case 'M': // Motor control
@@ -126,6 +151,12 @@ void loop() {
         distance = getDistance();
         Serial.println(distance);
         break;
+      case 'S': // Servo control
+        microServo.write(data.toInt());
+        break;
+      case 'D': //Dot Matrix
+        displayAtDotMatrix(data);
+        break;
     }
   }
 
@@ -161,6 +192,21 @@ int getDistance()
 
 /// End of Ultrasonic sensor
 
+/// Dot-Matrix Display
+void displayAtDotMatrix(String data)
+{
+  int index = 63;
+  for(int col = 0; col <8; col++)
+  {
+    for(int row = 7; row >= 0; row--)
+    {
+      int ledState = data.charAt(index) - '0';
+      dot.setLed(0,col,row,ledState);
+      index--;
+    }
+  }
+}
+/// End of Dot-Matrix Display
 
 ///////////////////////////////////////////////////////////////////////////
 //
