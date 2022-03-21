@@ -10,7 +10,7 @@ LedControl dot = LedControl(11,13,12,1);
 int ultraSonic_trig = 7;
 int ultraSonic_echo = 6;
 int button = 2;
-int servo = 10;
+int servo = 9;
 int distance =0;
 bool isUltraSonicCheck = false;
 bool button_clicked = false;
@@ -21,6 +21,11 @@ InfoToMakeDXLPacket_t _CM50_command;
 
 int32_t LED_ON = 1;
 int32_t LED_OFF = 0;
+
+int rightAngle = 30;
+int leftAngle = 150;
+int centerAngle = 90;
+
 /* Control protocol
 @[Target(1)][Length(2)][Data]#
 - Target:
@@ -28,6 +33,7 @@ int32_t LED_OFF = 0;
   L : Led
   U : Ultra Sonic
   S : Servo
+  H : Turn robot head with servo based on predefined angle
 - Data:
     Motor :
       MF : Move forward
@@ -48,7 +54,13 @@ int32_t LED_OFF = 0;
       Return [distance in cm]
     Servo :
       Angle (Example @S290# : Set servo angle to 90 dgree)
-      
+    Head :
+      SR[Angle] : Set right angle to [Angle]
+      SL[Angle] : Set left angle to [Angle]
+      SC[Angle] : Set center angle to [Angle]
+      TR : Turn head to right
+      TL : Turn head to left
+      TC : Trun head to center
 */
 
 void setup() {
@@ -153,6 +165,44 @@ void loop_uploadMode() {
         break;
       case 'S': // Servo control
         microServo.write(data.toInt());
+        break;
+      case 'H': // Head control with servo
+        if (data.equals("TR"))
+        {
+          microServo.write(rightAngle);
+        }
+        else if (data.equals("TL"))
+        {
+          microServo.write(leftAngle);
+        }
+        else if (data.equals("TC"))
+        {
+          microServo.write(centerAngle);
+        }
+        else
+        {
+          String setCommand = data.substring(0,2);
+          int targetValue = data.substring(2).toInt();
+
+          if(setCommand.equals("SR"))
+          {
+            Serial.println("Right");
+            Serial.println(targetValue);
+            rightAngle = targetValue;
+          }
+          else if(setCommand.equals("SL"))
+          {
+            Serial.println("Left");
+            Serial.println(targetValue);
+            leftAngle = targetValue;
+          }
+          else if(setCommand.equals("SC"))
+          {
+            Serial.println("Center");
+            Serial.println(targetValue);
+            centerAngle = targetValue;
+          }
+        }
         break;
       case 'D': //Dot Matrix
         displayAtDotMatrix(data);
