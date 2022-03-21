@@ -53,7 +53,7 @@ int centerAngle = 90;
       Data None.
       Return [distance in cm]
     Servo :
-      Angle (Example @S290# : Set servo angle to 90 dgree)
+      Angle (Example @S0290# : Set servo angle to 90 dgree)
     Head :
       SR[Angle] : Set right angle to [Angle]
       SL[Angle] : Set left angle to [Angle]
@@ -186,20 +186,14 @@ void loop_uploadMode() {
 
           if(setCommand.equals("SR"))
           {
-            Serial.println("Right");
-            Serial.println(targetValue);
             rightAngle = targetValue;
           }
           else if(setCommand.equals("SL"))
           {
-            Serial.println("Left");
-            Serial.println(targetValue);
             leftAngle = targetValue;
           }
           else if(setCommand.equals("SC"))
           {
-            Serial.println("Center");
-            Serial.println(targetValue);
             centerAngle = targetValue;
           }
         }
