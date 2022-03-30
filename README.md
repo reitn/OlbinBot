@@ -1,5 +1,32 @@
-# OlbinBot
+# Olbin Coding Bot
 Olbin Coding bot based on Arduino and Mblock
+
+
+## 부품 리스트
+
+### 아두이노
+- 아두이노 우노 (호환보드 가능)
+
+### 전원부
+- 18650 배터리
+- DC Stepup (SX1308) 2EA
+- TP4056
+- 스위치
+
+※ 그냥 7v 건전지와 CM-50에 AA건전지 3개로 대체 가능합니다
+
+### 센서 & 모터 & 디스플레이
+- 초음파 센서 (HC-SR04)
+- MAX7219 8x8 Dot Matrix
+- 서보모터 (SG90)
+
+### 버튼
+ - 푸쉬 버튼
+ - 10k 저항
+
+### 로보티즈 올로
+- CM-50 컨트롤러
+- 각종 올로 블록들
 
 
 ## Pin Layout

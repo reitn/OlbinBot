@@ -6,7 +6,9 @@
 SoftwareSerial mySerial(4,5);
 Servo microServo;
 LedControl dot = LedControl(11,13,12,1);
- 
+
+int olbin1;
+int olbin2;
 int ultraSonic_trig = 7;
 int ultraSonic_echo = 6;
 int button = 2;
@@ -86,6 +88,11 @@ void setup() {
   
   Serial.println("Start");
 
+}
+
+void _delay(float seconds) {
+  long endTime = millis() + seconds * 1000;
+  while(millis() < endTime) {}
 }
 
 void loop(){
@@ -220,6 +227,15 @@ void catchInterrupt()
 
 /// Ultrasonic sensor
 int getDistance()
+{
+    int distance1 = _getDistance();
+    if(distance1== 0)
+    {
+        return _getDistance();
+    }
+    return distance1;
+}
+int _getDistance()
 {
   if(isUltraSonicCheck)
   {
